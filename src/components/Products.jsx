@@ -1,8 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { products } from "../data/products";
+import { fetchSheetProducts } from "../data/productsSheet";
 
 export default function Products() {
+  const [displayedProducts, setDisplayedProducts] = useState(products);
   const [selectedImage, setSelectedImage] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    fetchSheetProducts(controller.signal)
+      .then(setDisplayedProducts)
+      .catch(() => {})
+      .finally(() => clearTimeout(timeoutId));
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, []);
 
   return (
     <section id="products" className="py-16 bg-slate-50">
@@ -14,9 +31,9 @@ export default function Products() {
         </p>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
+          {displayedProducts.map((product) => (
             <div
-              key={product.name}
+              key={product.id ?? product.name}
               className="bg-white rounded-xl shadow-md overflow-hidden"
             >
               <img
